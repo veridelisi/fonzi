@@ -80,39 +80,74 @@ if gap > 0.000001:
 if equity < 0:
     st.error("⚠️ Fonun model özkaynağı negatif: borçlar varlıkların değerini aşıyor.")
 
-st.subheader("İki taraflı T hesapları")
-left, right = st.columns(2)
-with left:
-    st.markdown("#### Hisse fonu — varlıklar")
-    st.dataframe(pd.DataFrame([
-        ("Banka nakdi", s.cash),
-        ("Serbest hisseler", s.free_shares * s.price),
-        ("Repo teminatındaki hisseler (mülkiyet varsayımı)", s.pledged_shares * s.price),
-        ("**Toplam aktif**", assets)
-    ], columns=["Kalem", "Milyon TL"]), hide_index=True, use_container_width=True)
-    st.markdown("#### Hisse fonu — pasif")
-    st.dataframe(pd.DataFrame([
-        ("Repo borcu", s.debt),
-        ("Özkaynak (NAV)", equity),
-        ("**Toplam pasif**", s.debt + equity)
-    ], columns=["Kalem", "Milyon TL"]), hide_index=True, use_container_width=True)
-with right:
-    st.markdown("#### Repo ile finansman sağlayan karşı taraf")
-    st.dataframe(pd.DataFrame([
-        ("Nakit", s.lender_cash),
-        ("Repo alacağı (anapara)", s.lender_receivable),
-        ("**Toplam aktif**", s.lender_cash + s.lender_receivable),
-        ("Özkaynak (basitleştirilmiş)", s.lender_cash + s.lender_receivable)
-    ], columns=["Kalem", "Milyon TL"]), hide_index=True, use_container_width=True)
-    st.markdown("#### Teminat takibi (bilanço dışı bilgi)")
+st.subheader("T-Balance | Karşılıklı Bilançolar")
+
+def t_balance(title, assets_rows, liabilities_rows):
+    """Aktif ve pasifi aynı yatay çizginin altında gösteren T bilanço."""
+    def side(rows):
+        return "".join(
+            f'<div class="t-row"><span>{name}</span><strong>{value:,.2f}</strong></div>'
+            for name, value in rows
+        )
+    left_total = sum(value for _, value in assets_rows)
+    right_total = sum(value for _, value in liabilities_rows)
+    st.markdown(f"""
+    <div class="t-sheet">
+      <div class="t-title">{title}</div>
+      <div class="t-head"><div>AKTİF (VARLIKLAR)</div><div>PASİF (BORÇ + ÖZKAYNAK)</div></div>
+      <div class="t-body">
+        <div class="t-side">{side(assets_rows)}</div>
+        <div class="t-side">{side(liabilities_rows)}</div>
+      </div>
+      <div class="t-foot">
+        <div><span>TOPLAM AKTİF</span><strong>{left_total:,.2f}</strong></div>
+        <div><span>TOPLAM PASİF</span><strong>{right_total:,.2f}</strong></div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("""
+<style>
+.t-sheet { border:1px solid #99a4b3; border-radius:11px; margin:9px 0 18px; overflow:hidden; }
+.t-title { padding:12px 14px; font-weight:750; font-size:1.07rem; text-align:center; background:rgba(120,140,160,.10); }
+.t-head,.t-body,.t-foot { display:grid; grid-template-columns:1fr 1fr; }
+.t-head { border-bottom:3px solid currentColor; font-size:.83rem; font-weight:750; text-align:center; }
+.t-head > div { padding:9px 5px; }
+.t-head > div:first-child,.t-body > div:first-child,.t-foot > div:first-child { border-right:2px solid #99a4b3; }
+.t-side { padding:8px 11px; min-height:136px; }
+.t-row,.t-foot > div { display:flex; justify-content:space-between; gap:9px; padding:7px 1px; font-size:.88rem; }
+.t-row strong,.t-foot strong { white-space:nowrap; font-variant-numeric:tabular-nums; }
+.t-foot { border-top:2px solid currentColor; background:rgba(120,140,160,.08); font-weight:750; }
+.t-foot > div { padding:10px 12px; }
+@media(max-width:640px) {
+  .t-side { padding:6px; } .t-row,.t-foot > div { font-size:.73rem; gap:4px; }
+  .t-head { font-size:.7rem; } .t-foot > div { padding:7px 5px; }
+}
+</style>
+""", unsafe_allow_html=True)
+
+st.caption("Tutarlar milyon TL. Teminata ayrılan hisseler basitleştirilmiş modelde fonun aktifinde tutulur.")
+t_balance(
+    "Hisse Fonu",
+    [("Banka nakdi", s.cash),
+     ("Serbest hisseler", s.free_shares * s.price),
+     ("Teminattaki hisseler", s.pledged_shares * s.price)],
+    [("Repo borcu", s.debt), ("Özkaynak (NAV)", equity)]
+)
+t_balance(
+    "Repo Finansörü (Karşı Taraf)",
+    [("Nakit", s.lender_cash), ("Repo alacağı", s.lender_receivable)],
+    [("Özkaynak", s.lender_cash + s.lender_receivable)]
+)
+with st.expander("Teminat takibi (bilanço dışı bilgi)"):
     st.dataframe(pd.DataFrame([
         ("Bloke hisse adedi (milyon)", s.pledged_shares),
-        ("Piyasa değeri", s.pledged_shares * s.price),
+        ("Hisselerin piyasa değeri", s.pledged_shares * s.price),
         ("Kabul edilen teminat değeri", collateral_limit()),
         ("Repo borcu", s.debt),
         ("Teminat açığı", gap)
     ], columns=["Kalem", "Değer"]), hide_index=True, use_container_width=True)
-    st.caption("Repo teminatı karşı tarafa ikinci kez aktif yazılmıyor. Gerçek repo işlemlerinde hukuki mülkiyet ve muhasebe uygulaması işlem türüne göre değişebilir.")
+    st.caption("Teminat karşı tarafa ikinci kez aktif yazılmaz. Gerçek repo işlemlerinde hukuki mülkiyet ve muhasebe işlem türüne göre değişebilir.")
 
 st.divider()
 st.subheader("1 · Hisse işlemleri ve fiyat hareketi")
