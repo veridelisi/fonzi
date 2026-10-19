@@ -82,16 +82,12 @@ k1,k2,k3,k4,k5=st.columns(5)
 k1.metric("Hisse fiyatı (son)",f"{final_price:.2f} TL",f"%{-fall_pct} (zirveden)")
 k2.metric("Fon NAV (son)",f"{nav_after:,.1f} mn TL",f"{nav_after-nav_before:+,.1f} mn TL")
 k3.metric("Repo borcu",f"{actual_repo:,.1f} mn TL")
-k4.metric("Teminat açığı",f"{margin_gap:,.1f} mn TL")
+k4.metric("Hisse portföyü",f"{stock_after:,.1f} mn TL")
 k5.metric("Vade günü nakit açığı",f"{cash_gap:,.1f} mn TL")
 
 st.caption(f"İlk hisse alımı: {first_buy:,.1f} mn TL • Yükseliş sonrası ilk hisselerin değeri: {pledged_market_value:,.1f} mn TL • "
            f"Yeni hisse alımı: {spent:,.1f} mn TL • Zirvede NAV: {nav_before:,.1f} mn TL")
 
-if margin_gap>0:
-    st.error(f"⚠️ Teminat açığı: {margin_gap:,.1f} milyon TL. Teminatın son değeri {collateral_after:,.1f}, gereken değer {required_collateral:,.1f} milyon TL.")
-elif actual_repo>0:
-    st.success("Teminat mevcut varsayımlarda yeterli.")
 if cash_gap>0:
     st.warning(f"Repo yenilenmezse {actual_repo:,.1f} milyon TL anapara ödenecek; elde {cash_before_fall:,.1f} milyon TL nakit var. "
                f"{cash_gap:,.1f} milyon TL başka kaynaktan bulunmalı. Bu otomatik iflas anlamına gelmez.")
@@ -117,6 +113,15 @@ fig=pd.DataFrame({
 },index=["Nakit","Hisseler","Repo borcu"]).T
 st.bar_chart(fig)
 st.caption("Grafikte nakit ve hisse varlıkları ile repo borcu birlikte gösterilir. Repo borcu varlık değil, yükümlülüktür.")
+
+with st.expander("Teknik ayrıntı: Teminat yeterliliği"):
+    st.write(f"Teminatın son değeri: **{collateral_after:,.1f} milyon TL** | Gereken değer: **{required_collateral:,.1f} milyon TL**")
+    if margin_gap > 0:
+        st.warning(f"Teminat açığı: {margin_gap:,.1f} milyon TL. Ek teminat veya borç azaltımı gerekebilir.")
+    elif actual_repo > 0:
+        st.success("Teminat bu varsayımlarda yeterli.")
+    else:
+        st.info("Repo borcu bulunmuyor.")
 
 with st.expander("İşlem sırası ve hesaplama notları"):
     st.markdown(f"""
