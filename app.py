@@ -6,8 +6,8 @@ st.set_page_config(page_title="Fonzi | Repo ve Teminat Krizi", page_icon="🎮",
 # Eğitim amaçlı basitleştirilmiş model. Bütün tutarlar milyon TL'dir.
 # Gerçek kurumlara ilişkin işlem veya manipülasyon iddiası içermez.
 INITIAL = {
-    "day": 1, "cash": 20.0, "free_shares": 100.0,
-    "pledged_shares": 100.0, "price": 1.0, "debt": 100.0,
+    "day": 1, "cash": 20.0, "free_shares": 50.0,
+    "pledged_shares": 150.0, "price": 1.0, "debt": 100.0,
     "lender_cash": 900.0, "lender_receivable": 100.0,
     "history": [], "events": []
 }
@@ -15,7 +15,7 @@ INITIAL = {
 def reset():
     for key, value in INITIAL.items():
         st.session_state[key] = value.copy() if isinstance(value, list) else value
-    log("Başlangıç", "Fon: 20 nakit + 200 hisse; 100 repo borcu. Karşı taraf: 900 nakit + 100 repo alacağı.")
+    log("Başlangıç", "Fon: 20 nakit + 50 serbest hisse + 150 teminatta hisse; 100 repo borcu. Karşı taraf: 900 nakit + 100 repo alacağı.")
 
 def log(action, detail):
     st.session_state.events.append({"Gün": st.session_state.day, "İşlem": action, "Açıklama": detail})
