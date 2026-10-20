@@ -1,186 +1,87 @@
-import math
-import pandas as pd
 import streamlit as st
+import pandas as pd
 
-st.set_page_config(page_title="Borçla Büyüyen Portföyler | İnteraktif İnfografik", page_icon="📊", layout="wide")
-
-START_PRICE = 100.0
-HAIRCUT = 0.10
-FUND_SHARES = 1_000_000
-FUND_CASH = 5.0
-LENDER_START_CASH = 500.0
-GROUP_COLLATERAL_SHARES = 1_200_000
-
-def amount(value):
-    return f"{value:,.1f} mn TL"
-
-def box(title, entries, color):
-    lines = "".join(
-        f'<div class="data-row"><span>{key}</span><b>{value}</b></div>'
-        for key, value in entries
-    )
-    st.markdown(
-        f'<div class="actor-card"><div class="actor-heading" style="border-left-color:{color}">{title}</div>{lines}</div>',
-        unsafe_allow_html=True
-    )
-
-def bubble(label, value, color):
-    # Global, fixed visual scale: bubbles grow as price increases.
-    diameter = min(190, max(22, 22 + 168 * math.sqrt(max(0, value) / 500)))
-    st.markdown(
-        f'<div class="bubble-column"><div class="circle" style="width:{diameter:.1f}px;height:{diameter:.1f}px;background:{color}"></div>'
-        f'<div class="bubble-name">{label}</div><div class="bubble-number">{amount(value)}</div></div>',
-        unsafe_allow_html=True
-    )
-
+st.set_page_config(page_title="Fon Krizi | Belgeli Finansman Ağı", page_icon="📊", layout="wide")
 st.markdown("""
 <style>
-.block-container {max-width:1180px;padding-top:1.2rem}
-.actor-card{border:1px solid #d6dce5;border-radius:13px;padding:14px;min-height:185px}
-.actor-heading{border-left:6px solid;font-size:1.05rem;font-weight:800;padding-left:9px;margin-bottom:12px}
-.data-row{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #e5e7eb;padding:9px 0;font-size:.9rem}
-.data-row:last-child{border:0}
-.data-row b{white-space:nowrap;font-variant-numeric:tabular-nums}
-.flow-card{text-align:center;border:1px solid #d6dce5;border-radius:12px;padding:13px;min-height:115px}
-.flow-card strong{display:block;margin-bottom:8px}
-.flow-card small{opacity:.8}
-.bubble-column{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:260px;gap:8px;text-align:center}
-.circle{border-radius:50%;flex-shrink:0;box-shadow:inset -8px -12px 20px rgba(0,0,0,.09)}
-.bubble-name{font-weight:650;font-size:.88rem}
-.bubble-number{font-weight:800;font-variant-numeric:tabular-nums}
-@media(max-width:700px){.actor-card{min-height:0}.bubble-column{height:235px}.bubble-name{font-size:.74rem}.bubble-number{font-size:.82rem}}
-
-/* Editorial infographic design */
-.actor-card{box-shadow:0 8px 24px rgba(15,23,42,.045);border-color:#dbe2ea;border-radius:18px;overflow:hidden}
-.actor-heading{font-weight:800;font-size:1.05rem}
-.data-row{border-bottom-color:#edf1f6}
-.flow-card{border:1px solid #dbe2ea;border-radius:18px;padding:16px;min-height:170px;box-shadow:0 8px 24px rgba(15,23,42,.04)}
-.flow-card strong{display:block;margin-bottom:8px;font-size:1.02rem;color:#0f172a}
-.flow-card small{color:#475569;line-height:1.5;font-size:.9rem}
-.flow-green{background:#f4faf7;border-top:5px solid #23856a}
-.flow-red{background:#fff8f6;border-top:5px solid #cc655b}
-.flow-blue{background:#f5f9ff;border-top:5px solid #447ac7}
-.flow-arrow{height:170px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center}
-.flow-arrow .arrow-icon{height:40px;width:40px;border-radius:50%;background:#23354c;color:white;display:grid;place-items:center;font-size:1.4rem}
-.flow-arrow small{font-size:.78rem;color:#60718a;line-height:1.35}
-@media(max-width:850px){.flow-card{min-height:0}.flow-arrow{height:130px}.flow-arrow small{font-size:.7rem}}
-
+.block-container{max-width:1220px;padding-top:1.4rem}
+.intro{color:#64748b;font-size:.95rem}
+.node{border:1px solid #cbd5e1;border-radius:14px;padding:17px;min-height:150px;background:#f8fafc}
+.node b{font-size:1.1rem}
+.node p{font-size:.89rem;line-height:1.5}
+.green{border-top:5px solid #178766}.blue{border-top:5px solid #3869a7}
+.red{border-top:5px solid #b55b56}
+.connector{text-align:center;font-size:1.5rem;color:#6b7280;padding:8px}
+.notice{border-left:4px solid #497da7;padding:12px 16px;background:#f0f5fa;border-radius:8px}
+@media(max-width:700px){.node{min-height:auto}}
 </style>
-""", unsafe_allow_html=True)
+""",unsafe_allow_html=True)
 
-st.title("📊 Borçla Büyüyen Portföyler")
-st.write("**Kısa vadeli repo finansmanı, hisse fiyatı ve fonun gerçek nakdi arasındaki fark**")
-st.caption("Varsayımsal interaktif infografik. Hiçbir gerçek kurumun danışıklı işlem yaptığı veya repo kaynaklarını hisse fiyatını yükseltmek için kullandığı bu modelle iddia edilmemektedir. Tutarlar milyon TL.")
+st.title("Fon Krizi: Bilançolar ve Finansman Bağlantıları")
+st.markdown('<p class="intro">2024 sonundan Eylül 2026’ya uzanan, yalnızca yayımlanmış tarihsel kayıtlarla oluşturulmuş inceleme. Simülasyon, varsayımsal rakam, oyun veya fiyat kaydırıcısı içermez.</p>',unsafe_allow_html=True)
+st.info("Önemli ayrım: Repo işleminde nakit veren fonun aktifinde **repo alacağı**, nakit kullanan kurumun pasifinde **repo borcu** doğar. Teminat hissesi, nakit borçlusu şirketle aynı şey değildir.")
 
-st.subheader("Tarihsel veriler: 31 Aralık 2025")
-st.caption("Kaynak: KAP finansal raporları. Aşağıdaki senaryo kaydırıcılarından bağımsızdır.")
-x1,x2,x3=st.columns(3)
-x1.metric("TP2 toplam varlık", "61,20 milyar TL")
-x2.metric("TP2 ters repo alacağı", "40,27 milyar TL")
-x3.metric("TP2 nakit ve benzerleri", "0,79 milyon TL")
-st.caption("KAP raporu: https://www.kap.org.tr/tr/Bildirim/1581001")
-with st.expander("KAP bağlantıları ve veri sınırları"):
-    st.write("TP2–Tera Yatırım Menkul Değerler: 29–30 Haziran ve 30 Haziran–1 Temmuz 2026, yıllık %43 borsa dışı ters repo.")
-    st.write("https://www.kap.org.tr/tr/Bildirim/1621562")
-    st.write("https://www.kap.org.tr/tr/Bildirim/1621971")
-    st.write("TLY 2025 finansal raporu: https://www.kap.org.tr/tr/Bildirim/1581004")
-    st.write("Tera Yatırım Bankası 2025 raporu: https://www.kap.org.tr/tr/Bildirim/1562246")
-    st.write("Bu veriler, repo nakdinin belirli hisse alımlarına kullanıldığını kanıtlamaz.")
-st.divider()
+st.subheader("1 · Tarihsel bilanço göstergeleri")
+st.caption("Tabloda dönemler birbirine karıştırılmamıştır. 2026 Eylül sonu için tam bilanço mevcut değilse veri türetilmemiştir.")
+records=[
+    ("31.12.2024","TLY","Fon toplam değeri / NAV",0.817627,"2024 fon raporu"),
+    ("31.12.2025","TLY","Net varlık değeri / NAV",35.30,"2025 finansal rapor"),
+    ("31.12.2025","TP2","Toplam varlıklar",61.202,"2025 finansal rapor"),
+    ("31.12.2025","TP2","Net varlık değeri / NAV",61.05,"2025 finansal rapor"),
+    ("31.12.2025","TP2","Ters repo alacakları",40.275,"2025 finansal rapor"),
+    ("31.12.2025","TP2","Nakit ve nakit benzerleri",0.000787,"2025 finansal rapor"),
+]
+df=pd.DataFrame(records,columns=["Tarih","Kurum/fon","Bilanço kalemi","Milyar TL","Belge"])
+st.dataframe(df,hide_index=True,use_container_width=True,column_config={"Milyar TL":st.column_config.NumberColumn(format="%.6f")})
+st.caption("TP2'nin ters repo alacakları, para fonunun bankadaki kullanılabilir nakdi olarak okunamaz. TLY'nin 2024–2025 NAV büyümesi de tek başına fiyat artışını göstermez; fon giriş/çıkışları ayrıştırılmalıdır.")
 
-st.subheader("1. Değerleri değiştir")
-left, right = st.columns(2)
-with left:
-    multiple = st.slider("Hisse fiyat katsayısı (sağa çekerek artır)",1.0,5.0,1.0,0.1)
-with right:
-    desired_loan = st.slider("Grup şirketlerinin istediği repo borcu (mn TL)",0.0,300.0,100.0,5.0)
+c1,c2,c3=st.columns(3)
+c1.metric("TLY 2024 sonu NAV","0,818 milyar TL")
+c2.metric("TLY 2025 sonu NAV","35,30 milyar TL")
+c3.metric("TP2 2025 sonu ters repo alacağı","40,275 milyar TL")
+st.markdown("**Kaynaklar:** [TLY 2024 fon raporu](https://www.kap.org.tr/tr/api/file/download/4028328c949953a00194b1159d9976cb) · [TP2 2025 finansal raporu](https://www.kap.org.tr/tr/Bildirim/1581001) · [TLY 2025 raporu](https://www.kap.org.tr/tr/Bildirim/1581004)")
 
-price = START_PRICE * multiple
-collateral_market = GROUP_COLLATERAL_SHARES * price / 1_000_000
-collateral_eligible = collateral_market * (1 - HAIRCUT)
-loan = min(desired_loan, collateral_eligible, LENDER_START_CASH)
-remaining_lender_cash = LENDER_START_CASH - loan
-lender_claim = loan
-group_bought = loan  # Bu senaryoda alınan repo nakdinin tamamı piyasada hisse alımına gider.
-group_new_shares = loan * 1_000_000 / price
-group_stock_value = collateral_market + group_bought
-group_debt = loan
-group_equity = group_stock_value - group_debt
-fund_stock_before = FUND_SHARES * START_PRICE / 1_000_000
-fund_stock_now = FUND_SHARES * price / 1_000_000
-fund_nav = fund_stock_now + FUND_CASH
-extra_capacity = max(0.0, collateral_eligible - loan)
+st.subheader("2 · Belgelenmiş finansman ağı")
+l,mid,r=st.columns([4,1,4])
+with l:
+    st.markdown('<div class="node green"><b>TP2 — Para Piyasası Fonu</b><p>2026 tarihli açıklamalarda borsa dışı ters repo yapan, nakit sağlayan taraf.</p><p><b>Aktif: Repo alacağı</b></p></div>',unsafe_allow_html=True)
+with mid:
+    st.markdown('<div class="connector">→</div><div style="text-align:center;font-size:.8rem">Repo nakdi</div>',unsafe_allow_html=True)
+with r:
+    st.markdown('<div class="node red"><b>Tera Yatırım Menkul Değerler</b><p>TP2 ile bildirilen işlemlerde repo finansmanı kullanan karşı taraf.</p><p><b>Pasif: Repo borcu</b></p></div>',unsafe_allow_html=True)
+st.caption("Kaynak: KAP tarihli borsa dışı ters repo bildirimleri; işlemlerin anapara büyüklükleri bu açıklamalardan çıkartılamaz.")
 
-if loan + 1e-9 < desired_loan:
-    st.warning(f"Talep edilen reponun yalnızca {amount(loan)} tutarı teminat veya para fonu nakdi sınırı nedeniyle karşılanabilir.")
+st.subheader("3 · Eylül 2026 öncesi doğrulanan repo işlemleri")
+transactions=[
+    ("13–14.07.2026","TP2","Tera Yatırım Menkul Değerler",43,"https://www.kap.org.tr/tr/Bildirim/1632916"),
+    ("29–30.07.2026","TP2","Tera Yatırım Menkul Değerler",43,"https://www.kap.org.tr/tr/Bildirim/1638563"),
+    ("05–06.08.2026","TLY","Tera Yatırım Menkul Değerler",43,"https://www.kap.org.tr/tr/Bildirim/1643656"),
+    ("10–11.08.2026","TLY","Tera Yatırım Menkul Değerler",43,"https://www.kap.org.tr/tr/Bildirim/1646721"),
+    ("21–24.08.2026","TLY","Tera Yatırım Menkul Değerler",43,"https://www.kap.org.tr/tr/Bildirim/1654172"),
+    ("24–25.08.2026","TP2","Tera Yatırım Menkul Değerler",43,"https://www.kap.org.tr/tr/Bildirim/1654508"),
+    ("01–02.09.2026","TP2","Tera Yatırım Menkul Değerler",43,"https://www.kap.org.tr/tr/Bildirim/1656969"),
+    ("07–08.09.2026","TP2","Tera Yatırım Menkul Değerler",43,"https://www.kap.org.tr/tr/Bildirim/1659629"),
+    ("08–09.09.2026","TP2","Tera Yatırım Menkul Değerler",43,"https://www.kap.org.tr/tr/Bildirim/1660238"),
+    ("09–10.09.2026","TP2","Tera Yatırım Menkul Değerler",43,"https://www.kap.org.tr/tr/Bildirim/1661096"),
+    ("11–14.09.2026","TP2","Tera Yatırım Menkul Değerler",43,"https://www.kap.org.tr/tr/Bildirim/1662026")
+]
+t=pd.DataFrame(transactions,columns=["İşlem dönemi","Nakit sağlayan","Borçlanan karşı taraf","Yıllık faiz (%)","KAP bildirimi"])
+st.dataframe(t,hide_index=True,use_container_width=True,column_config={"KAP bildirimi":st.column_config.LinkColumn("Resmî kaynak",display_text="KAP bildirimi"),"Yıllık faiz (%)":st.column_config.NumberColumn(format="%d%%")})
+st.caption("Bunlar seçilmiş, doğrudan bağlantısı doğrulanmış işlemlerdir; tüm repo işlemleri değildir. Aynı nakdin her gün çevrildiği, toplam repo borcu veya hisse alımında kullanıldığı bu tablodan hesaplanamaz.")
 
-st.subheader("2. Üç aktör, üç ayrı bilanço")
-a,b,c = st.columns(3)
+st.subheader("4 · Hisse taşıyan fon ile finansman tarafı ayrı")
+a,b=st.columns(2)
 with a:
-    box("Para Piyasası Fonu",[
-        ("Başlangıç nakdi",amount(LENDER_START_CASH)),
-        ("Kalan nakit",amount(remaining_lender_cash)),
-        ("Repo alacağı",amount(lender_claim))], "#16a34a")
+    st.markdown('<div class="node blue"><b>TLY: Hisse taşıyan fon</b><p>Fiyat değişimleri fonun portföy değerini etkiler. Aynı fonun bazı tarihlerde Tera Yatırım’a ters repo ile finansman sağladığı da belgelenmiştir.</p></div>',unsafe_allow_html=True)
 with b:
-    box("Borçlanan Grup Şirketi",[
-        ("Repo borcu",amount(group_debt)),
-        ("Teminattaki hisseler",amount(collateral_market)),
-        ("Repo nakdiyle alınan hisseler",amount(group_bought))], "#dc2626")
-with c:
-    box("Hisseleri Elinde Tutan Fon",[
-        ("Hisse adedi",f"{FUND_SHARES:,.0f}"),
-        ("Hisse portföyü",amount(fund_stock_now)),
-        ("Banka nakdi",amount(FUND_CASH))], "#2563eb")
+    st.markdown('<div class="node red"><b>Tera Yatırım: Repo borçlanan</b><p>Repo finansmanı kullanıldığı belgelidir. Alınan nakdin hangi hisse emirlerinde kullanıldığını kanıtlayan işlem bazlı veri ise bu kayıtlarda bulunmamaktadır.</p></div>',unsafe_allow_html=True)
+st.markdown('<div class="notice"><b>Belgeli ilişki ≠ kanıtlanmış fiyat şişirme zinciri.</b> Repo işlemi, hisse portföyü ve piyasa fiyatları birlikte incelenebilir; ancak repo nakdinin belli hisselerin fiyatını yükseltmek için kullanıldığını kanıtlamak için nakit akışları, emir ve karşı taraf kayıtları gerekir.</div>',unsafe_allow_html=True)
 
-st.subheader("3. Nakit akışı ve fiyat mekanizması")
-st.caption("Akış soldan sağa: kısa vadeli finansman → hisse alımı → başka bir fondaki hisselerin değerlenmesi.")
-f1, arrow1, f2, arrow2, f3 = st.columns([3.1,1.0,3.1,1.0,3.1],gap="small")
-with f1:
-    st.markdown(f'<div class="flow-card flow-green"><strong>① Para piyasası fonu</strong>{amount(loan)} repo finansmanı sağlar.<br><small>Nakit azalır; karşılığında repo alacağı oluşur.</small></div>', unsafe_allow_html=True)
-with arrow1:
-    st.markdown('<div class="flow-arrow"><div class="arrow-icon">→</div><small>Repo nakdi</small></div>', unsafe_allow_html=True)
-with f2:
-    st.markdown(f'<div class="flow-card flow-red"><strong>② Borçlanan grup şirketi</strong>{amount(group_bought)} ile hisse alır.<br><small>Repo borcu şirketin pasifindedir.</small></div>', unsafe_allow_html=True)
-with arrow2:
-    st.markdown('<div class="flow-arrow"><div class="arrow-icon">→</div><small>Fiyat üzerinde olası baskı</small></div>', unsafe_allow_html=True)
-with f3:
-    st.markdown(f'<div class="flow-card flow-blue"><strong>③ Hisse taşıyan fon</strong>Hisse fiyatı {price:,.0f} TL olur.<br><small>Fonun hisse adedi ve banka nakdi değişmez.</small></div>', unsafe_allow_html=True)
-
-st.caption("Fiyat değişimi sürgüyle varsayılıyor; model, alım tutarından otomatik fiyat etkisi hesaplamıyor. Repo teminatı grup şirketine ait hisselerdir, diğer fonun hisseleri değildir.")
-
-st.subheader("4. Fiyat arttığında teminat kapasitesi")
-m1,m2,m3,m4 = st.columns(4)
-m1.metric("Teminatın piyasa değeri", amount(collateral_market))
-m2.metric("%10 haircut sonrası", amount(collateral_eligible))
-m3.metric("Repo borcu", amount(loan))
-m4.metric("Ek teminat kapasitesi", amount(extra_capacity))
-st.caption("Basitleştirilmiş örnek: Kabul edilen teminat = hisse piyasa değeri × %90. Kullanılabilecek yeni borç ayrıca karşı tarafın nakdine, limitlere ve sözleşmeye bağlıdır.")
-
-st.subheader("5. Fonun görünen değeri büyür, nakdi aynı kalır")
-compare=pd.DataFrame({
-    "Gösterge":["Hisse adedi","Hisse fiyatı","Hisse portföyü","Bankadaki nakit","Fonun net varlık değeri"],
-    "Başlangıç":[f"{FUND_SHARES:,.0f}",f"{START_PRICE:,.0f} TL",amount(fund_stock_before),amount(FUND_CASH),amount(fund_stock_before+FUND_CASH)],
-    "Seçilen fiyat":[f"{FUND_SHARES:,.0f}",f"{price:,.0f} TL",amount(fund_stock_now),amount(FUND_CASH),amount(fund_nav)]
-})
-st.dataframe(compare,hide_index=True,use_container_width=True)
-
-st.subheader("6. Piyasa değeri başka, nakit başka")
-d1,d2,d3=st.columns(3)
-with d1: bubble("Hisse taşıyan fonun portföyü",fund_stock_now,"#93c5fd")
-with d2: bubble("Hisse taşıyan fonun nakdi",FUND_CASH,"#86efac")
-with d3: bubble("Para fonunun kalan nakdi",remaining_lender_cash,"#fdba74")
-st.info(f"Fonun elinde yine {FUND_SHARES:,.0f} hisse bulunuyor. Hisselerin piyasa değeri {amount(fund_stock_now)}; "
-        f"ama fonun banka nakdi yalnızca {amount(FUND_CASH)}. "
-        "Değerleme artışı tek başına nakit girişi değildir.")
-
-st.subheader("7. Ekonomik sonuç")
-st.write("**Repo finansmanı grup şirketinin borcunu ve para fonunun alacağını artırır.** Borçlanan şirketin hisse talebi, piyasa koşullarına bağlı olarak fiyatı etkileyebilir. Fiyatı yükselen hisseleri elinde tutan başka bir fon, hiç hisse satmadan daha yüksek NAV gösterebilir. Bu durum, fonun aynı tutarda likit nakde sahip olduğu anlamına gelmez.")
-with st.expander("Varsayımlar, sınırlar ve muhasebe notları"):
-    st.markdown(f"""
-- Fiyat artışı sürgüyle belirlenen **varsayımdır**; gerçekleşmiş fiyat manipülasyonunu veya nedenselliği kanıtlamaz.
-- Tek para fonu, tek grup şirketi ve hisseleri satmadan tutan ayrı bir fon bulunur.
-- Grup şirketi başlangıçta {GROUP_COLLATERAL_SHARES:,.0f} adet teminatlık hisseye sahiptir; repo ile aldığı tutarın tamamını hisse alımına yönlendirir. Teminatlık hisseler ile yeni alınan hisseler birbirinden ayrıdır.
-- Repo borcu grup şirketinin pasifinde, repo alacağı para fonunun aktifindedir. Hisse tutan fonun repo borcu varsayılmamıştır.
-- Teminata sabit **%10 haircut** uygulanır. Faiz, temerrüt, değerleme farklarının realize edilmesi, işlem hacmi kaynaklı fiyat oluşumu ve kurumlar arası diğer işlemler modellenmez.
-- Balon çapı tüm senaryolarda **sabit referans ölçeği** kullanır ve 190 pikselde sınırlandırılır; bu sınırın üzerindeki tutarlar için balon büyümeye devam etmez.
+st.subheader("5 · Araştırmada eksik kalan tarihsel köprüler")
+st.markdown("""
+- **2025 ilk yarı ve 2026 ilk yarı:** TP2 ve TLY fonlarının tam aktif/pasif hareketleri ve katılma payı giriş-çıkışları aynı tanımlarla karşılaştırılmalı.
+- **2026 Ağustos–Eylül:** Fonların hisse adedi, gerçek nakit, repo alacağı ve karşı taraf detayları resmî portföy dökümleriyle eşleştirilmeli.
+- **Grup şirketleri:** Tera Yatırım Bankası, Destek Faktoring ve Tera Varlık Kiralama için finansman araçları ayrı ayrı sınıflandırılmalı; kira sertifikası, repo ve doğrudan kredi birbirine karıştırılmamalı.
+- **Eylül krizi:** Satış emirleri, pay blokajları ve tasfiye sırasında gerçekleşen nakit dağıtımları ayrıca belgelenmeli.
 """)
+st.caption("Veri ilkesi: Kaynağı bulunmayan hücrelere tahmin yazılmaz. Bu sayfadaki tarihler ve repo yönleri KAP bildirimleriyle desteklenmektedir.")
