@@ -25,10 +25,15 @@ st.markdown("""
 .mini small{display:block;color:#777}.mini strong{font-size:1.16rem}
 div.stButton>button{border-radius:28px;min-height:53px;font-size:1.0rem}
 @media(max-width:700px){.sheet{min-height:245px;padding:12px}.sheet-head{font-size:.92rem}.entry{font-size:.86rem}.mini-grid{gap:5px}.mini{padding:8px 2px}.mini strong{font-size:.87rem}}
+.bubble-wrap{height:340px;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:7px;text-align:center}
+.bubble{border-radius:50%;border:2px solid rgba(0,0,0,.08);flex-shrink:0;box-shadow:inset -12px -14px 25px rgba(0,0,0,.09)}
+.bubble-label{font-weight:700;font-size:.92rem}
+.bubble-value{font-weight:800;font-size:1.16rem}
+@media(max-width:640px){.bubble-wrap{height:295px}.bubble-label{font-size:.8rem}.bubble-value{font-size:.94rem}}
 </style>
 """,unsafe_allow_html=True)
 
-INITIAL={"day":0,"cash":20.0,"free":100.0,"pledged":100.0,"price":1.0,"debt":100.0,"lender_cash":900.0,"lender_claim":100.0,"interest_total":0.0,"message":""}
+INITIAL={"day":0,"cash":20.0,"free":80.0,"pledged":120.0,"price":1.0,"debt":100.0,"lender_cash":900.0,"lender_claim":100.0,"interest_total":0.0,"message":""}
 if "fonzi_day" not in st.session_state:
     for k,v in INITIAL.items(): st.session_state["fonzi_"+k]=v
 
@@ -36,7 +41,8 @@ def v(k): return st.session_state["fonzi_"+k]
 def setv(k,val): st.session_state["fonzi_"+k]=val
 def fmt(x): return f"{x:,.2f} TL"
 def nav(): return v("cash")+(v("free")+v("pledged"))*v("price")-v("debt")
-def available(): return max(0.0,v("pledged")*v("price")-v("debt"))
+HAIRCUT = 0.10
+def available(): return max(0.0,v("pledged")*v("price")*(1-HAIRCUT)-v("debt"))
 def sheet(title,side,entries,total):
     items="".join(f'<div class="entry {c}"><span>{label}</span><b>{fmt(value)}</b></div>' for label,value,c in entries)
     st.markdown(f'<div class="sheet {side}"><div class="sheet-head"><span>{title}</span><span>{fmt(total)}</span></div>{items}</div>',unsafe_allow_html=True)
@@ -57,11 +63,11 @@ with r:
         ("Özkaynak (Net Varlık)",nav(),"total green")],asset)
 # Faiz ödemeleri fonun nakdinden çıktığı için ayrı bir pasif değildir.
 # Yukarıda ödenen faiz yalnızca bilgi amaçlıdır; toplam pasife dahil edilmez.
-ratio=v("pledged")*v("price")/v("debt")*100 if v("debt") else 0
+ratio=v("pledged")*v("price")*(1-HAIRCUT)/v("debt")*100 if v("debt") else 0
 lev=asset/nav() if nav()>0 else 0
 st.markdown(f"""
 <div class="info-panel">
-  <div style="display:flex;justify-content:space-between;gap:12px"><span>Teminatın Repo Borcunu Karşılama Oranı</span><b>{ratio:.1f}%</b></div>
+  <div style="display:flex;justify-content:space-between;gap:12px"><span>İskontolu Teminatın Borcu Karşılama Oranı (%10 haircut)</span><b>{ratio:.1f}%</b></div>
   <div style="height:12px;border-radius:9px;background:#e0e0e0;margin-top:9px;overflow:hidden">
     <div style="width:{min(100,ratio):.1f}%;height:100%;background:#00905a"></div>
   </div>
@@ -88,7 +94,7 @@ with a:
 with b:
     if st.button("Hisse Fiyatı +%20",use_container_width=True):
         setv("price",v("price")*1.20)
-        setv("message","Hisse fiyatı yükseldi: portföy ve teminatın piyasa değeri arttı, fonun nakdi değişmedi.")
+        setv("message",f"Hisse fiyatı %20 yükseldi. %10 iskontodan sonra ek repo kapasitesi {fmt(available())} oldu. Fonun banka nakdi değişmedi.")
         st.rerun()
 with c:
     if st.button("Ekstra Borçlan & Hisse Al",use_container_width=True,disabled=available()<0.01 or v("lender_cash")<0.01):
@@ -101,12 +107,29 @@ with c:
         st.rerun()
 
 if v("message"): st.info(v("message"))
+
+st.markdown("### 🎈 Şişen hisse değeri, değişmeyen nakit")
+stock_value=(v("free")+v("pledged"))*v("price")
+cash_value=v("cash")
+base=max(stock_value,cash_value,1.0)
+def balloon(label,value,fill):
+    diameter=max(66,min(250,250*(max(value,0)/base)**0.5))
+    st.markdown(f"""<div class="bubble-wrap">
+        <div class="bubble" style="width:{diameter:.0f}px;height:{diameter:.0f}px;background:{fill}"></div>
+        <div class="bubble-label">{label}</div>
+        <div class="bubble-value">{fmt(value)}</div>
+    </div>""",unsafe_allow_html=True)
+
+bubbleleft,bubbleright=st.columns(2)
+with bubbleleft: balloon("Hisse portföyünün piyasa değeri",stock_value,"#87b7fb")
+with bubbleright: balloon("Fonun bankadaki nakdi",cash_value,"#80dcb3")
+st.caption("Balonların büyüklüğü tutarı temsil eder. Hisse fiyatındaki artış bankadaki nakdi kendiliğinden artırmaz.")
 with st.expander("Parayı veren ilişkili para fonu"):
     st.write(f"**Nakit:** {fmt(v('lender_cash'))}  ·  **Repo alacağı:** {fmt(v('lender_claim'))}  ·  **Toplam varlık:** {fmt(v('lender_cash')+v('lender_claim'))}")
     st.caption("Para fonunun nakdi, alacağa dönüşür. Repo alacağının tahsilatı garanti değildir.")
 with st.expander("Varsayımlar ve sıfırlama"):
-    st.caption("Tüm tutarlar varsayımsal birimlerdir; gerçek Tera işlemleri değildir. Başlangıçta 20 nakit, 100 serbest hisse ve 100 teminatlı hisse karşılığında 100 repo borcu vardır. Teminatın piyasa değerinin tamamı kabul edilir. Yıllık repo faizi %43'tür; her tur bir günlük faiz nakitten ödenir. Fiyat yükselişi dışsal senaryodur.")
+    st.caption("Tüm tutarlar varsayımsal birimlerdir; gerçek Tera işlemleri değildir. Başlangıçta 20 nakit, 80 serbest hisse ve 120 teminatlı hisse karşılığında 100 repo borcu vardır. Teminata sabit %10 haircut uygulanır: 120 TL hisse değeri 108 TL kabul edilen teminattır. Yıllık repo faizi %43'tür; her tur bir günlük faiz nakitten ödenir. Fiyat yükselişi dışsal senaryodur.")
     if st.button("Oyunu Sıfırla"):
         for k,value in INITIAL.items():setv(k,value)
         st.rerun()
-st.caption("Ek repo, başlangıçta nakdi artırsa da aynı işlemde hisseye yatırılır. Hisse piyasa değerindeki artış nakit değildir. Gerçek kurumların danışıklı işlem yaptığı bu modelden çıkarılamaz.")
+st.caption("Repo teminatına sabit %10 haircut uygulanır. Ek repo, başlangıçta nakdi artırsa da aynı işlemde hisseye yatırılır. Hisse piyasa değerindeki artış nakit değildir. Gerçek kurumların danışıklı işlem yaptığı bu modelden çıkarılamaz.")
