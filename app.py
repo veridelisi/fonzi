@@ -25,11 +25,11 @@ st.markdown("""
 .mini small{display:block;color:#777}.mini strong{font-size:1.16rem}
 div.stButton>button{border-radius:28px;min-height:53px;font-size:1.0rem}
 @media(max-width:700px){.sheet{min-height:245px;padding:12px}.sheet-head{font-size:.92rem}.entry{font-size:.86rem}.mini-grid{gap:5px}.mini{padding:8px 2px}.mini strong{font-size:.87rem}}
-.bubble-wrap{height:340px;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:7px;text-align:center}
+.bubble-wrap{height:270px;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:7px;text-align:center}
 .bubble{border-radius:50%;border:2px solid rgba(0,0,0,.08);flex-shrink:0;box-shadow:inset -12px -14px 25px rgba(0,0,0,.09)}
 .bubble-label{font-weight:700;font-size:.92rem}
 .bubble-value{font-weight:800;font-size:1.16rem}
-@media(max-width:640px){.bubble-wrap{height:295px}.bubble-label{font-size:.8rem}.bubble-value{font-size:.94rem}}
+@media(max-width:640px){.bubble-wrap{height:240px}.bubble-label{font-size:.8rem}.bubble-value{font-size:.94rem}}
 </style>
 """,unsafe_allow_html=True)
 
@@ -113,7 +113,7 @@ stock_value=(v("free")+v("pledged"))*v("price")
 cash_value=v("cash")
 base=max(stock_value,cash_value,1.0)
 def balloon(label,value,fill):
-    diameter=max(66,min(250,250*(max(value,0)/base)**0.5))
+    diameter=max(36,min(175,175*(max(value,0)/base)**0.5))
     st.markdown(f"""<div class="bubble-wrap">
         <div class="bubble" style="width:{diameter:.0f}px;height:{diameter:.0f}px;background:{fill}"></div>
         <div class="bubble-label">{label}</div>
