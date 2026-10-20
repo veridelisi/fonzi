@@ -49,6 +49,22 @@ st.markdown("""
 .bubble-name{font-weight:650;font-size:.88rem}
 .bubble-number{font-weight:800;font-variant-numeric:tabular-nums}
 @media(max-width:700px){.actor-card{min-height:0}.bubble-column{height:235px}.bubble-name{font-size:.74rem}.bubble-number{font-size:.82rem}}
+
+/* Editorial infographic design */
+.actor-card{box-shadow:0 8px 24px rgba(15,23,42,.045);border-color:#dbe2ea;border-radius:18px;overflow:hidden}
+.actor-heading{font-weight:800;font-size:1.05rem}
+.data-row{border-bottom-color:#edf1f6}
+.flow-card{border:1px solid #dbe2ea;border-radius:18px;padding:16px;min-height:170px;box-shadow:0 8px 24px rgba(15,23,42,.04)}
+.flow-card strong{display:block;margin-bottom:8px;font-size:1.02rem;color:#0f172a}
+.flow-card small{color:#475569;line-height:1.5;font-size:.9rem}
+.flow-green{background:#f4faf7;border-top:5px solid #23856a}
+.flow-red{background:#fff8f6;border-top:5px solid #cc655b}
+.flow-blue{background:#f5f9ff;border-top:5px solid #447ac7}
+.flow-arrow{height:170px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center}
+.flow-arrow .arrow-icon{height:40px;width:40px;border-radius:50%;background:#23354c;color:white;display:grid;place-items:center;font-size:1.4rem}
+.flow-arrow small{font-size:.78rem;color:#60718a;line-height:1.35}
+@media(max-width:850px){.flow-card{min-height:0}.flow-arrow{height:130px}.flow-arrow small{font-size:.7rem}}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -101,13 +117,19 @@ with c:
         ("Banka nakdi",amount(FUND_CASH))], "#2563eb")
 
 st.subheader("3. Nakit akışı ve fiyat mekanizması")
-f1,f2,f3 = st.columns(3)
+st.caption("Akış soldan sağa: kısa vadeli finansman → hisse alımı → başka bir fondaki hisselerin değerlenmesi.")
+f1, arrow1, f2, arrow2, f3 = st.columns([3.1,1.0,3.1,1.0,3.1],gap="small")
 with f1:
-    st.markdown(f'<div class="flow-card"><strong>1 · Para fonu</strong>{amount(loan)} repo finansmanı verir.<br><small>Nakit azalır, repo alacağı artar.</small></div>',unsafe_allow_html=True)
+    st.markdown(f'<div class="flow-card flow-green"><strong>① Para piyasası fonu</strong>{amount(loan)} repo finansmanı sağlar.<br><small>Nakit azalır; karşılığında repo alacağı oluşur.</small></div>', unsafe_allow_html=True)
+with arrow1:
+    st.markdown('<div class="flow-arrow"><div class="arrow-icon">→</div><small>Repo nakdi</small></div>', unsafe_allow_html=True)
 with f2:
-    st.markdown(f'<div class="flow-card"><strong>2 · Grup şirketi</strong>{amount(group_bought)} tutarında hisse alır.<br><small>Repo borcu grup şirketinin pasifindedir.</small></div>',unsafe_allow_html=True)
+    st.markdown(f'<div class="flow-card flow-red"><strong>② Borçlanan grup şirketi</strong>{amount(group_bought)} ile hisse alır.<br><small>Repo borcu şirketin pasifindedir.</small></div>', unsafe_allow_html=True)
+with arrow2:
+    st.markdown('<div class="flow-arrow"><div class="arrow-icon">→</div><small>Fiyat üzerinde olası baskı</small></div>', unsafe_allow_html=True)
 with f3:
-    st.markdown(f'<div class="flow-card"><strong>3 · Hisse taşıyan fon</strong>Hisse fiyatı {price:,.0f} TL olur.<br><small>Hisse adedi ve banka nakdi değişmez.</small></div>',unsafe_allow_html=True)
+    st.markdown(f'<div class="flow-card flow-blue"><strong>③ Hisse taşıyan fon</strong>Hisse fiyatı {price:,.0f} TL olur.<br><small>Fonun hisse adedi ve banka nakdi değişmez.</small></div>', unsafe_allow_html=True)
+
 st.caption("Fiyat değişimi sürgüyle varsayılıyor; model, alım tutarından otomatik fiyat etkisi hesaplamıyor. Repo teminatı grup şirketine ait hisselerdir, diğer fonun hisseleri değildir.")
 
 st.subheader("4. Fiyat arttığında teminat kapasitesi")
