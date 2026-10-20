@@ -72,6 +72,22 @@ st.title("📊 Borçla Büyüyen Portföyler")
 st.write("**Kısa vadeli repo finansmanı, hisse fiyatı ve fonun gerçek nakdi arasındaki fark**")
 st.caption("Varsayımsal interaktif infografik. Hiçbir gerçek kurumun danışıklı işlem yaptığı veya repo kaynaklarını hisse fiyatını yükseltmek için kullandığı bu modelle iddia edilmemektedir. Tutarlar milyon TL.")
 
+st.subheader("Tarihsel veriler: 31 Aralık 2025")
+st.caption("Kaynak: KAP finansal raporları. Aşağıdaki senaryo kaydırıcılarından bağımsızdır.")
+x1,x2,x3=st.columns(3)
+x1.metric("TP2 toplam varlık", "61,20 milyar TL")
+x2.metric("TP2 ters repo alacağı", "40,27 milyar TL")
+x3.metric("TP2 nakit ve benzerleri", "0,79 milyon TL")
+st.caption("KAP raporu: https://www.kap.org.tr/tr/Bildirim/1581001")
+with st.expander("KAP bağlantıları ve veri sınırları"):
+    st.write("TP2–Tera Yatırım Menkul Değerler: 29–30 Haziran ve 30 Haziran–1 Temmuz 2026, yıllık %43 borsa dışı ters repo.")
+    st.write("https://www.kap.org.tr/tr/Bildirim/1621562")
+    st.write("https://www.kap.org.tr/tr/Bildirim/1621971")
+    st.write("TLY 2025 finansal raporu: https://www.kap.org.tr/tr/Bildirim/1581004")
+    st.write("Tera Yatırım Bankası 2025 raporu: https://www.kap.org.tr/tr/Bildirim/1562246")
+    st.write("Bu veriler, repo nakdinin belirli hisse alımlarına kullanıldığını kanıtlamaz.")
+st.divider()
+
 st.subheader("1. Değerleri değiştir")
 left, right = st.columns(2)
 with left:
