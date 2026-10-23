@@ -21,6 +21,51 @@ st.title("Fon Krizi: Bilançolar ve Finansman Bağlantıları")
 st.markdown('<p class="intro">2024 sonundan Eylül 2026’ya uzanan, yalnızca yayımlanmış tarihsel kayıtlarla oluşturulmuş inceleme. Simülasyon, varsayımsal rakam, oyun veya fiyat kaydırıcısı içermez.</p>',unsafe_allow_html=True)
 st.info("Önemli ayrım: Repo işleminde nakit veren fonun aktifinde **repo alacağı**, nakit kullanan kurumun pasifinde **repo borcu** doğar. Teminat hissesi, nakit borçlusu şirketle aynı şey değildir.")
 
+
+st.subheader("KAP Kaynaklı İlişki Haritası")
+st.caption("Bağlantıların türü renkle ayrılır: yeşil repo finansmanı, mavi hisse sahipliği, gri fon yönetimi. Farklı tarihlerdeki pozisyonlar tek güne ait değildir.")
+import plotly.graph_objects as go
+
+graph_nodes = {
+    "portfoy": ("Tera Portföy", 0.0, 0.48, "#64748b"),
+    "tp2": ("TP2 Para Fonu", 0.9, 0.84, "#15803d"),
+    "tly": ("TLY Serbest Fon", 0.9, 0.13, "#15803d"),
+    "tera": ("Tera Yatırım", 2.2, 0.84, "#be5c52"),
+    "ozatd": ("OZATD", 2.2, 0.13, "#2f69b1"),
+    "bank": ("Tera Yatırım Bankası", 2.2, 0.48, "#be5c52"),
+    "tmm": ("TMM Fonu", 0.9, 0.48, "#15803d")
+}
+edges = [
+    ("portfoy","tp2","Yönetim","#94a3b8","Tera Portföy yöneticidir"),
+    ("portfoy","tly","Yönetim","#94a3b8","Tera Portföy yöneticidir"),
+    ("tp2","tera","Ters repo","#15803d","11–14.09.2026 · %43 yıllık faiz · KAP 1662026"),
+    ("tly","tera","Ters repo","#15803d","11–14.09.2026 · %43 yıllık faiz · KAP 1662027"),
+    ("tmm","bank","Ters repo","#15803d","11–14.09.2026 ve 11–18.09.2026 · USD · KAP 1662022"),
+    ("portfoy","ozatd","Fonların toplu payı","#2f69b1","31.08.2026 · OZATD sermayesinde %17,932395 · KAP 1657706")
+]
+figure=go.Figure()
+for source,target,label,color,detail in edges:
+    x0,y0=graph_nodes[source][1:3]
+    x1,y1=graph_nodes[target][1:3]
+    figure.add_trace(go.Scatter(x=[x0,x1],y=[y0,y1],mode="lines",
+       line=dict(color=color,width=3),hoverinfo="text",text=[detail,detail],
+       showlegend=False))
+    figure.add_annotation(x=(x0+x1)/2,y=(y0+y1)/2,text=label,showarrow=False,
+       font=dict(size=10,color=color),bgcolor="rgba(255,255,255,.85)")
+for identifier,(name,x,y,color) in graph_nodes.items():
+    figure.add_trace(go.Scatter(x=[x],y=[y],mode="markers+text",
+        marker=dict(size=34,color=color,line=dict(width=2,color="white")),
+        text=[name],textposition="bottom center",hovertemplate=name+"<extra></extra>",
+        showlegend=False,textfont=dict(size=12)))
+figure.update_layout(height=480,margin=dict(l=15,r=15,t=10,b=10),
+    xaxis=dict(visible=False,range=[-.3,2.6]),
+    yaxis=dict(visible=False,range=[-.10,1.04]),
+    plot_bgcolor="rgba(0,0,0,0)",paper_bgcolor="rgba(0,0,0,0)",dragmode="pan")
+st.plotly_chart(figure,use_container_width=True,config={"displayModeBar":False})
+st.markdown("**Kaynaklar:** [OZATD pay açıklaması](https://www.kap.org.tr/tr/Bildirim/1657706) · [TP2 repo](https://www.kap.org.tr/tr/Bildirim/1662026) · [TLY repo](https://www.kap.org.tr/tr/Bildirim/1662027) · [TMM repo](https://www.kap.org.tr/tr/Bildirim/1662022)")
+st.caption("OZATD bağlantısı beş yönetilen fonun TOPLAM sahipliğidir; tek tek TLY payını göstermez. Repo bağlantıları, nakdin hisse alımında kullanıldığını kanıtlamaz.")
+st.divider()
+
 st.subheader("1 · Tarihsel bilanço göstergeleri")
 st.caption("Tabloda dönemler birbirine karıştırılmamıştır. 2026 Eylül sonu için tam bilanço mevcut değilse veri türetilmemiştir.")
 records=[
