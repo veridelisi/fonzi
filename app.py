@@ -22,100 +22,66 @@ st.markdown('<p class="intro">2024 sonundan Eylül 2026’ya uzanan, yalnızca y
 st.info("Önemli ayrım: Repo işleminde nakit veren fonun aktifinde **repo alacağı**, nakit kullanan kurumun pasifinde **repo borcu** doğar. Teminat hissesi, nakit borçlusu şirketle aynı şey değildir.")
 
 
-st.subheader("Tera Bağlantılı Fonların Hisse Sahiplik Ağı")
-st.caption("Bir fonun veya hisse kodunun üzerine tıklayın: yalnızca seçilen aktör ve doğrudan ortaklık bağlantıları görünür. Oranlar şirketin TOPLAM sermayesi içindeki paylardır.")
+st.subheader("Tera ve Tera Bağlantılı Fonların Hisse Sahiplik Ağı")
+st.caption("Önceki görünüm: solda ortaklar, sağda hisseler. Bağlantı üzerindeki oran, şirketin toplam sermayesinde ilgili ortağın payını gösterir. Tıklama ile filtreleme yoktur.")
 import plotly.graph_objects as go
 import textwrap
 
-# Matriks Analist ekranlarından birebir okunmuş, yalnızca Tera bağlantılı ortaklar.
-# Ekranlarda ortaklık kesit tarihi belirtilmemiştir.
+# Kaynak: kullanıcı tarafından gönderilen Matriks Analist DSTKF ve KTLEV ortaklık ekranları.
+# Ekranların sahiplik kesit tarihi bilinmiyor.
 holdings = [
-    ("DSTKF", "Tera Portföy Birinci Serbest Fon", 8.06, "Fon"),
-    ("DSTKF", "Tera Portföy Para Piyasası Fonu (TP2)", 7.21, "Fon"),
-    ("DSTKF", "Tera Yatırım Menkul Değerler", 3.08, "Şirket"),
-    ("KTLEV", "Tera Portföy Hisse Senedi (TL) Fonu", 3.12, "Fon"),
+    ("DSTKF", "Tera Portföy Birinci Serbest Fon", 8.06, "Tera fonu"),
+    ("DSTKF", "Tera Portföy Para Piyasası Fonu (TP2)", 7.21, "Tera fonu"),
+    ("DSTKF", "Tera Yatırım Menkul Değerler", 3.08, "Tera şirketi"),
+    ("KTLEV", "Tera Portföy Hisse Senedi (TL) Fonu", 3.12, "Tera fonu"),
 ]
-df_ownership = pd.DataFrame(holdings, columns=["Hisse", "Ortak / fon", "Sermaye payı (%)", "Tür"])
-names = list(dict.fromkeys([row[1] for row in holdings] + [row[0] for row in holdings]))
-if "ownership_focus" not in st.session_state:
-    st.session_state.ownership_focus = None
-if "ownership_graph_version" not in st.session_state:
-    st.session_state.ownership_graph_version = 0
+df_ownership = pd.DataFrame(holdings, columns=["Hisse", "Ortak / fon", "Pay (%)", "Tür"])
+investors = list(dict.fromkeys(r[1] for r in holdings))
+companies = list(dict.fromkeys(r[0] for r in holdings))
+investor_y = {name: 3-i for i,name in enumerate(investors)}
+company_y = {"DSTKF": 2.0, "KTLEV": 0.0}
+colors = {"Tera fonu":"#2369c9", "Tera şirketi":"#0e8274"}
 
-focus = st.session_state.ownership_focus
-visible = [r for r in holdings if focus is None or focus in (r[0], r[1])]
-visible_investors = list(dict.fromkeys(r[1] for r in visible))
-visible_companies = list(dict.fromkeys(r[0] for r in visible))
-N = max(len(visible_investors), len(visible_companies))
-height = max(430, N * 105 + 110)
-left_y = {name: (len(visible_investors)-1-i) for i,name in enumerate(visible_investors)}
-right_y = {name: (len(visible_companies)-1-i) * max(len(visible_investors)-1,1)/max(len(visible_companies)-1,1)
-           for i,name in enumerate(visible_companies)}
-fig = go.Figure()
-
-# Çizgi yüzdelerini sabit, büyük ve çizginin üzerinde göster.
-for ticker, owner, pct, kind in visible:
-    y0, y1 = left_y[owner], right_y[ticker]
-    color = "#2563eb" if kind == "Fon" else "#0f766e"
+fig=go.Figure()
+for ticker,owner,pct,typ in holdings:
+    y0,y1=investor_y[owner],company_y[ticker]
+    color=colors[typ]
     fig.add_trace(go.Scatter(
-        x=[0.49,0.82], y=[y0,y1], mode="lines",
-        line=dict(color=color,width=2.7),hoverinfo="skip",
-        showlegend=False))
-    xmid=0.68
-    ymid=y0+(y1-y0)*(xmid-0.49)/(0.82-0.49)
-    fig.add_trace(go.Scatter(
-        x=[xmid],y=[ymid],mode="markers+text",
-        marker=dict(size=25,color="rgba(255,255,255,0.92)",line=dict(width=0)),
-        text=[f"<b>%{pct:.2f}</b>".replace(".",",")],
-        textposition="middle center",textfont=dict(size=15,color=color),
+        x=[0.52,0.84],y=[y0,y1],mode="lines",
+        line=dict(color=color,width=3.1),
         hovertemplate=f"{owner} → {ticker}: %{pct:.2f}<extra></extra>",
         showlegend=False))
-# İsimler bu kez kesilmesin: grafik içi etiket, ortanın sağına kadar uzanmaz.
-for owner in visible_investors:
-    name_lines="<br>".join(textwrap.wrap(owner, 30,break_long_words=False))
-    fig.add_trace(go.Scatter(
-        x=[0.47], y=[left_y[owner]],mode="markers+text",
-        marker=dict(color="#2563eb" if "Fon" in owner else "#0f766e",size=21),
-        text=[name_lines],textposition="middle left",textfont=dict(size=12,color="#334155"),
-        customdata=[owner],hovertemplate="Seç: "+owner+"<extra></extra>",
-        selected=dict(marker=dict(size=25)),showlegend=False))
-for ticker in visible_companies:
-    fig.add_trace(go.Scatter(
-        x=[0.84],y=[right_y[ticker]],mode="markers+text",
-        marker=dict(color="#ea8a30",size=26),
-        text=[ticker],textposition="middle right",textfont=dict(size=16,color="#334155"),
-        customdata=[ticker],hovertemplate="Seç: "+ticker+"<extra></extra>",
-        selected=dict(marker=dict(size=30)),showlegend=False))
-fig.update_layout(
-    height=height,margin=dict(l=15,r=12,t=35,b=35),
-    xaxis=dict(visible=False,range=[0,1]),
-    yaxis=dict(visible=False,range=[-0.45,max(len(visible_investors)-1,1)+0.45]),
-    clickmode="event+select",dragmode=False,
-    paper_bgcolor="rgba(0,0,0,0)",plot_bgcolor="rgba(0,0,0,0)")
-
-event = st.plotly_chart(
-    fig,use_container_width=True,config={"displayModeBar":False},
-    on_select="rerun",selection_mode="points",
-    key=f"tera_sahiplik_{st.session_state.ownership_graph_version}")
-points = event.selection.points if event is not None else []
-clicked = next((p.get("customdata") for p in points if isinstance(p.get("customdata"),str) and p.get("customdata") in names),None)
-if clicked is not None and clicked != focus:
-    st.session_state.ownership_focus = clicked
-    st.session_state.ownership_graph_version += 1
-    st.rerun()
-if focus:
-    st.markdown(f"**Seçilen: {focus}** — yalnızca doğrudan ilişkiler gösteriliyor.")
-    if st.button("↩ Tüm ağı göster",key="tera_reset"):
-        st.session_state.ownership_focus = None
-        st.session_state.ownership_graph_version += 1
-        st.rerun()
-else:
-    st.caption("Mavi: Tera fonları · Yeşil: Tera şirketi · Turuncu: hisseler. Düğümün üzerine tıklayarak ağı süzebilirsiniz.")
-
-shown = pd.DataFrame(visible,columns=["Hisse","Tera bağlantılı ortak","Pay (%)","Tür"])
-shown["Pay (%)"] = shown["Pay (%)"].map(lambda x:f"%{x:.2f}".replace(".",","))
-st.dataframe(shown[["Hisse","Tera bağlantılı ortak","Pay (%)"]],use_container_width=True,hide_index=True)
-st.caption("Kaynak: Kullanıcının paylaştığı Matriks Analist DSTKF ve KTLEV ortaklık ekranları. Kesit tarihi belirsizdir. PASEU ve ODINE ekranlarında doğrudan Tera bağlantılı büyük ortak listelenmediği için bu grafikte yoktur. Fon yatırımcısı ile fonun portföy mülkiyeti aynı şey değildir.")
+    # Kalın yüzdelik etiket, tam çizginin üzerinde ve beyaz zeminde.
+    x_pct = 0.73
+    y_pct = y0+(y1-y0)*(x_pct-0.52)/(0.84-0.52)
+    fig.add_annotation(x=x_pct,y=y_pct,
+        text=f"<b>%{pct:.2f}</b>".replace(".",","),
+        showarrow=False,bgcolor="#ffffff",bordercolor=color,
+        borderwidth=1.8,borderpad=6,
+        font=dict(size=17,color="#152338"),xanchor="center",yanchor="middle")
+for owner in investors:
+    typ=next(t for _,n,_,t in holdings if n==owner)
+    fig.add_trace(go.Scatter(x=[0.52],y=[investor_y[owner]],mode="markers",
+        marker=dict(size=18,color=colors[typ]),hovertemplate=owner+"<extra></extra>",showlegend=False))
+    label="<br>".join(textwrap.wrap(owner,width=33,break_long_words=False))
+    fig.add_annotation(x=0.48,y=investor_y[owner],text=label,showarrow=False,
+        xanchor="right",yanchor="middle",align="right",font=dict(size=13,color="#24344b"))
+for ticker,y in company_y.items():
+    fig.add_trace(go.Scatter(x=[0.84],y=[y],mode="markers",
+        marker=dict(size=29,color="#e58b36",line=dict(width=2,color="white")),
+        hovertemplate=ticker+"<extra></extra>",showlegend=False))
+    fig.add_annotation(x=0.88,y=y,text=f"<b>{ticker}</b>",showarrow=False,
+        xanchor="left",font=dict(size=17,color="#24344b"))
+fig.update_layout(height=590,margin=dict(l=12,r=12,t=25,b=25),
+    xaxis=dict(visible=False,range=[0,1]),yaxis=dict(visible=False,range=[-0.6,3.6]),
+    paper_bgcolor="rgba(0,0,0,0)",plot_bgcolor="rgba(0,0,0,0)",
+    dragmode=False)
+st.plotly_chart(fig,use_container_width=True,config={"displayModeBar":False})
+st.caption("Mavi: Tera fonları · Yeşil: Tera şirketi · Turuncu: hisseler. Kalın çerçeveli yüzdeler daima görünür.")
+shown=df_ownership.copy()
+shown["Pay (%)"]=shown["Pay (%)"].map(lambda x:f"%{x:.2f}".replace(".",","))
+st.dataframe(shown[["Hisse","Ortak / fon","Pay (%)"]],hide_index=True,use_container_width=True)
+st.caption("Kaynak: Gönderilen Matriks Analist DSTKF ve KTLEV ortaklık ekranları. Ekranlarda kesit tarihi yer almıyor; rakamlar belirli bir günün güncel sahiplikleri olarak yorumlanmamalı. PASEU ve ODINE ekranlarında Tera bağlantılı büyük ortak belirtilmediği için gösterilmedi.")
 st.divider()
 
 st.subheader("1 · Tarihsel bilanço göstergeleri")
