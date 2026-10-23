@@ -69,30 +69,50 @@ nodes=sorted(investors,key=lambda n:(-degree[n], -sum(company_y[t] for t,v,_,_ i
 investor_y={name:(len(nodes)-1-i)*3.0/max(len(nodes)-1,1) for i,name in enumerate(nodes)}
 palette={"Tera fonu":"#2473bb","Tera şirketi":"#1d4ed8","Pusula fonu":"#0e906a",
          "Pusula şirketi":"#0c7560","Diğer":"#94a3b8"}
+# Kenarlarda kesilmeyi önlemek için isimleri grafiğin İÇİNDE tutuyoruz.
+# Uzun adları iki satıra bölmek, mobilde daha okunaklıdır.
+import textwrap
+def node_label(name):
+    if name.startswith("Diğer / "):
+        return name
+    return "<br>".join(textwrap.wrap(name, width=29, break_long_words=False))
+
 fig=go.Figure()
 for ticker,owner,pct,typ in network_rows:
     y0=investor_y[owner];y1=company_y[ticker]
-    fig.add_trace(go.Scatter(x=[0,1],y=[y0,y1],mode="lines",
-        line=dict(color=palette[typ],width=max(1.3,min(pct/15,5))),
+    color=palette[typ]
+    fig.add_trace(go.Scatter(x=[0.37,0.79],y=[y0,y1],mode="lines",
+        line=dict(color=color,width=max(1.3,min(pct/15,5))),
         customdata=[[ticker,owner,pct],[ticker,owner,pct]],
-        hovertemplate="<b>%{customdata[1]}</b> → <b>%{customdata[0]}</b><br>Sermaye payı: %%{customdata[2]:.2f}<extra></extra>",
+        hovertemplate="<b>%{customdata[1]}</b> → <b>%{customdata[0]}</b><br>Pay: %{customdata[2]:.2f}%<extra></extra>",
         showlegend=False))
+    # Yüzde çizgi üzerinde; konumlar şirket ucuna yakın.
+    x_percent=0.70
+    y_percent=y0+(y1-y0)*(x_percent-0.37)/(0.79-0.37)
+    fig.add_annotation(x=x_percent,y=y_percent,
+        text=f"%{pct:.2f}".replace(".",","),showarrow=False,
+        font=dict(size=10,color=color),bgcolor="rgba(255,255,255,0.89)",
+        borderpad=1)
 for name in investors:
     typ=next(z for t,n,p,z in network_rows if n==name)
-    fig.add_trace(go.Scatter(x=[0],y=[investor_y[name]],mode="markers+text",
-        marker=dict(size=11,color=palette[typ]),text=[name],textposition="middle left",
-        hovertemplate=name+"<extra></extra>",showlegend=False,textfont=dict(size=10)))
+    fig.add_trace(go.Scatter(x=[0.34],y=[investor_y[name]],mode="markers",
+        marker=dict(size=12,color=palette[typ]),
+        hovertemplate=name+"<extra></extra>",showlegend=False))
+    fig.add_annotation(x=0.32,y=investor_y[name],text=node_label(name),
+        xanchor="right",yanchor="middle",align="right",showarrow=False,
+        font=dict(size=11,color="#334155"))
 for ticker,y in company_y.items():
-    fig.add_trace(go.Scatter(x=[1],y=[y],mode="markers+text",
-       marker=dict(size=31,color="#e18a37",line=dict(color="white",width=1.5)),
-       text=[ticker],textposition="middle right",hovertemplate=ticker+"<extra></extra>",
-       showlegend=False,textfont=dict(size=14)))
-fig.update_layout(height=820,margin=dict(l=295,r=110,t=30,b=20),
-    xaxis=dict(visible=False,range=[-0.05,1.15]),yaxis=dict(visible=False,range=[-0.17,3.17]),
+    fig.add_trace(go.Scatter(x=[0.80],y=[y],mode="markers",
+       marker=dict(size=30,color="#e18a37",line=dict(color="white",width=1.5)),
+       hovertemplate=ticker+"<extra></extra>",showlegend=False))
+    fig.add_annotation(x=0.83,y=y,text=f"<b>{ticker}</b>",
+        xanchor="left",showarrow=False,font=dict(size=14,color="#334155"))
+fig.update_layout(height=max(920,len(investors)*49),margin=dict(l=12,r=12,t=35,b=25),
+    xaxis=dict(visible=False,range=[0,1]),yaxis=dict(visible=False,range=[-0.20,3.20]),
     paper_bgcolor="rgba(0,0,0,0)",plot_bgcolor="rgba(0,0,0,0)",
     hovermode="closest",dragmode=False)
 st.plotly_chart(fig,use_container_width=True,config={"displayModeBar":False})
-st.caption("Mavi: Tera bağlantılı doğrudan ortak/fon · Yeşil: Pusula fonu/şirketi · Gri: diğer yatırımcılar · Turuncu: hisseler. Çizgi kalınlığı pay oranını kabaca gösterir; ok yönü ortaktan hisseye doğrudur.")
+st.caption("Sol: ortak/fon adı · Çizgilerde: şirket sermayesindeki pay yüzdesi · Sağ: şirket. Mavi Tera, yeşil Pusula, gri diğer ortaklar. Mobilde çizgiler yoğun görünürse hemen alttaki şirket bazlı yüzdelik tabloyu kullanabilirsiniz.")
 st.markdown("**Ortaklıkları şirket bazında inceleyin:**")
 for ticker in company_y:
     chunk=df_ownership[df_ownership["Hisse"]==ticker].copy()
