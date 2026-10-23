@@ -22,48 +22,84 @@ st.markdown('<p class="intro">2024 sonundan Eylül 2026’ya uzanan, yalnızca y
 st.info("Önemli ayrım: Repo işleminde nakit veren fonun aktifinde **repo alacağı**, nakit kullanan kurumun pasifinde **repo borcu** doğar. Teminat hissesi, nakit borçlusu şirketle aynı şey değildir.")
 
 
-st.subheader("KAP Kaynaklı İlişki Haritası")
-st.caption("Bağlantıların türü renkle ayrılır: yeşil repo finansmanı, mavi hisse sahipliği, gri fon yönetimi. Farklı tarihlerdeki pozisyonlar tek güne ait değildir.")
+st.subheader("Şirketten Ortağa · Tersine Sahiplik Haritası")
+st.caption("Başlangıç noktası şirketlerdir: DSTKF, KTLEV, PASEU ve ODINE. Her çizgi ilgili şirketin sermayesindeki bildirilen payı gösterir. Kaynak: kullanıcı tarafından sağlanan Matriks Analist ortaklık ekranları; ortaklık kesit tarihi görüntülerde bulunmadığından güncel veya 16 Eylül tarihli olduğu varsayılmamıştır.")
 import plotly.graph_objects as go
 
-graph_nodes = {
-    "portfoy": ("Tera Portföy", 0.0, 0.48, "#64748b"),
-    "tp2": ("TP2 Para Fonu", 0.9, 0.84, "#15803d"),
-    "tly": ("TLY Serbest Fon", 0.9, 0.13, "#15803d"),
-    "tera": ("Tera Yatırım", 2.2, 0.84, "#be5c52"),
-    "ozatd": ("OZATD", 2.2, 0.13, "#2f69b1"),
-    "bank": ("Tera Yatırım Bankası", 2.2, 0.48, "#be5c52"),
-    "tmm": ("TMM Fonu", 0.9, 0.48, "#15803d")
-}
-edges = [
-    ("portfoy","tp2","Yönetim","#94a3b8","Tera Portföy yöneticidir"),
-    ("portfoy","tly","Yönetim","#94a3b8","Tera Portföy yöneticidir"),
-    ("tp2","tera","Ters repo","#15803d","11–14.09.2026 · %43 yıllık faiz · KAP 1662026"),
-    ("tly","tera","Ters repo","#15803d","11–14.09.2026 · %43 yıllık faiz · KAP 1662027"),
-    ("tmm","bank","Ters repo","#15803d","11–14.09.2026 ve 11–18.09.2026 · USD · KAP 1662022"),
-    ("portfoy","ozatd","Fonların toplu payı","#2f69b1","31.08.2026 · OZATD sermayesinde %17,932395 · KAP 1657706")
+# Şirketler (hedef) ve ortaklar (kaynak); yüzdeler ekran görüntülerinden okunmuştur.
+holdings = [
+    ("DSTKF","Destek Holding",73.81,"Diğer"),
+    ("DSTKF","Tera Portföy Birinci Serbest Fon",8.06,"Tera fonu"),
+    ("DSTKF","Diğer",7.84,"Diğer"),
+    ("DSTKF","Tera Portföy Para Piyasası Fonu (TP2)",7.21,"Tera fonu"),
+    ("DSTKF","Tera Yatırım Menkul Değerler",3.08,"Tera şirketi"),
+    ("KTLEV","Pusula Finans Holding",29.50,"Pusula şirketi"),
+    ("KTLEV","Diğer",22.55,"Diğer"),
+    ("KTLEV","Pusula Portföy Üçüncü Hisse Senedi Fonu",15.90,"Pusula fonu"),
+    ("KTLEV","Pusula Portföy Kuzey Hisse Senedi Fonu",15.34,"Pusula fonu"),
+    ("KTLEV","Ömer Burkay",9.33,"Diğer"),
+    ("KTLEV","Pusula Portföy Para Piyasası Fonu",4.26,"Pusula fonu"),
+    ("KTLEV","Tera Portföy Hisse Senedi (TL) Fonu",3.12,"Tera fonu"),
+    ("PASEU","Pusula Portföy Üçüncü Hisse Senedi Fonu",17.92,"Pusula fonu"),
+    ("PASEU","Pasifik Holding",17.86,"Diğer"),
+    ("PASEU","Pardus Portföy Yönetimi A.Ş.",17.86,"Diğer"),
+    ("PASEU","Diğer",17.13,"Diğer"),
+    ("PASEU","Pasifik Gayrimenkul Yatırım İnşaat",10.08,"Diğer"),
+    ("PASEU","Pusula Portföy Beşinci Hisse Senedi Fonu",8.11,"Pusula fonu"),
+    ("PASEU","Pusula Portföy Para Piyasası Fonu",5.24,"Pusula fonu"),
+    ("PASEU","Mehmet Erdoğan",4.08,"Diğer"),
+    ("ODINE","Alper Tunğa Sağ Burak",33.00,"Diğer"),
+    ("ODINE","Diğer",19.49,"Diğer"),
+    ("ODINE","Geylan Abdülaziz Zapsu",19.15,"Diğer"),
+    ("ODINE","Pusula Portföy Üçüncü Hisse Senedi Fonu",9.93,"Pusula fonu"),
+    ("ODINE","Cengiz Avcı",6.34,"Diğer"),
+    ("ODINE","Fırat Kerim Ersoy",4.64,"Diğer"),
+    ("ODINE","Hasan Kaytan",4.06,"Diğer"),
+    ("ODINE","Feridun Geçgel",3.39,"Diğer"),
 ]
-figure=go.Figure()
-for source,target,label,color,detail in edges:
-    x0,y0=graph_nodes[source][1:3]
-    x1,y1=graph_nodes[target][1:3]
-    figure.add_trace(go.Scatter(x=[x0,x1],y=[y0,y1],mode="lines",
-       line=dict(color=color,width=3),hoverinfo="text",text=[detail,detail],
-       showlegend=False))
-    figure.add_annotation(x=(x0+x1)/2,y=(y0+y1)/2,text=label,showarrow=False,
-       font=dict(size=10,color=color),bgcolor="rgba(255,255,255,.85)")
-for identifier,(name,x,y,color) in graph_nodes.items():
-    figure.add_trace(go.Scatter(x=[x],y=[y],mode="markers+text",
-        marker=dict(size=34,color=color,line=dict(width=2,color="white")),
-        text=[name],textposition="bottom center",hovertemplate=name+"<extra></extra>",
-        showlegend=False,textfont=dict(size=12)))
-figure.update_layout(height=480,margin=dict(l=15,r=15,t=10,b=10),
-    xaxis=dict(visible=False,range=[-.3,2.6]),
-    yaxis=dict(visible=False,range=[-.10,1.04]),
-    plot_bgcolor="rgba(0,0,0,0)",paper_bgcolor="rgba(0,0,0,0)",dragmode="pan")
-st.plotly_chart(figure,use_container_width=True,config={"displayModeBar":False})
-st.markdown("**Kaynaklar:** [OZATD pay açıklaması](https://www.kap.org.tr/tr/Bildirim/1657706) · [TP2 repo](https://www.kap.org.tr/tr/Bildirim/1662026) · [TLY repo](https://www.kap.org.tr/tr/Bildirim/1662027) · [TMM repo](https://www.kap.org.tr/tr/Bildirim/1662022)")
-st.caption("OZATD bağlantısı beş yönetilen fonun TOPLAM sahipliğidir; tek tek TLY payını göstermez. Repo bağlantıları, nakdin hisse alımında kullanıldığını kanıtlamaz.")
+# Aynı isimli "Diğer" kalemleri ayrı şirketin anonim toplamını gösterir, ortak kişi değildir.
+network_rows = [(ticker, (name if name!="Diğer" else "Diğer / "+ticker), pct, typ)
+                for ticker,name,pct,typ in holdings]
+df_ownership=pd.DataFrame(network_rows,columns=["Hisse","Ortak / fon","Sermaye payı (%)","Sınıf"])
+company_y={"DSTKF":3.0,"KTLEV":2.0,"PASEU":1.0,"ODINE":0.0}
+investors=list(dict.fromkeys(row[1] for row in network_rows))
+# Fonların birden fazla şirketle bağlantısı ortada, kalan ortaklar kendi şirketinin yanında dizilir.
+degree={n:sum(1 for _,v,_,_ in network_rows if v==n) for n in investors}
+nodes=sorted(investors,key=lambda n:(-degree[n], -sum(company_y[t] for t,v,_,_ in network_rows if v==n)/degree[n],n))
+investor_y={name:(len(nodes)-1-i)*3.0/max(len(nodes)-1,1) for i,name in enumerate(nodes)}
+palette={"Tera fonu":"#2473bb","Tera şirketi":"#1d4ed8","Pusula fonu":"#0e906a",
+         "Pusula şirketi":"#0c7560","Diğer":"#94a3b8"}
+fig=go.Figure()
+for ticker,owner,pct,typ in network_rows:
+    y0=investor_y[owner];y1=company_y[ticker]
+    fig.add_trace(go.Scatter(x=[0,1],y=[y0,y1],mode="lines",
+        line=dict(color=palette[typ],width=max(1.3,min(pct/15,5))),
+        customdata=[[ticker,owner,pct],[ticker,owner,pct]],
+        hovertemplate="<b>%{customdata[1]}</b> → <b>%{customdata[0]}</b><br>Sermaye payı: %%{customdata[2]:.2f}<extra></extra>",
+        showlegend=False))
+for name in investors:
+    typ=next(z for t,n,p,z in network_rows if n==name)
+    fig.add_trace(go.Scatter(x=[0],y=[investor_y[name]],mode="markers+text",
+        marker=dict(size=11,color=palette[typ]),text=[name],textposition="middle left",
+        hovertemplate=name+"<extra></extra>",showlegend=False,textfont=dict(size=10)))
+for ticker,y in company_y.items():
+    fig.add_trace(go.Scatter(x=[1],y=[y],mode="markers+text",
+       marker=dict(size=31,color="#e18a37",line=dict(color="white",width=1.5)),
+       text=[ticker],textposition="middle right",hovertemplate=ticker+"<extra></extra>",
+       showlegend=False,textfont=dict(size=14)))
+fig.update_layout(height=820,margin=dict(l=295,r=110,t=30,b=20),
+    xaxis=dict(visible=False,range=[-0.05,1.15]),yaxis=dict(visible=False,range=[-0.17,3.17]),
+    paper_bgcolor="rgba(0,0,0,0)",plot_bgcolor="rgba(0,0,0,0)",
+    hovermode="closest",dragmode=False)
+st.plotly_chart(fig,use_container_width=True,config={"displayModeBar":False})
+st.caption("Mavi: Tera bağlantılı doğrudan ortak/fon · Yeşil: Pusula fonu/şirketi · Gri: diğer yatırımcılar · Turuncu: hisseler. Çizgi kalınlığı pay oranını kabaca gösterir; ok yönü ortaktan hisseye doğrudur.")
+st.markdown("**Ortaklıkları şirket bazında inceleyin:**")
+for ticker in company_y:
+    chunk=df_ownership[df_ownership["Hisse"]==ticker].copy()
+    chunk["Sermaye payı (%)"]=chunk["Sermaye payı (%)"].map(lambda v:f"%{v:.2f}".replace(".",","))
+    st.markdown(f"**{ticker}**")
+    st.dataframe(chunk[["Ortak / fon","Sermaye payı (%)","Sınıf"]],hide_index=True,use_container_width=True)
+st.warning("Bu oranlar pay sahipliğini gösterir; portföy yönetimi ile nihai ekonomik mülkiyet veya ortaklar arasında koordinasyon olduğu sonucu çıkarılamaz. 'Diğer' payları ayrı bir kişi/kurum değil, ilgili şirketin toplulaştırılmış kalan kısmıdır. Matriks verilerinin geçerlilik tarihi ayrıca teyit edilmelidir.")
 st.divider()
 
 st.subheader("1 · Tarihsel bilanço göstergeleri")
